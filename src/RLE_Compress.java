@@ -61,40 +61,10 @@ public class RLE_Compress {
 				rle_process(outputFilename, filelength);
 			}
 
-			// invalidate the current string so that it will now write the last byte or run
-			// of bytes read from the file
-			readInt++;
-			// left pad the read decimal value
-			readDec = String.format("%02d", readInt);
-			rle_process(outputFilename, filelength);
+			writeEOFByte(filelength, outputFilename);
 
-			// write an end of file id byte FFFE, which decompression routine can
-			// check for end of compressed data
+			showEncodingResultinNewDialog(filelength, outputFilename);
 
-			int[] outputArray2 = new int[2];
-			outputArray2[0] = Integer.parseInt("ff", 16);
-			outputArray2[1] = Integer.parseInt("fe", 16);
-			writeToOutputFileArray(outputArray2, outputFilename);
-
-			System.out.println("##EOF##\n");
-
-			// calculate rle encoding result %
-			long outputfilelength = 0;
-			File file = new File(outputFilename);
-			if (file.exists()) {
-				outputfilelength = file.length();
-			}
-			System.out.println("Original String Length " + filelength);
-			System.out.println("RLE Encoded Size " + outputfilelength);
-
-			float percent = (float) 100.0 - (outputfilelength * (float) 100.0) / filelength;
-			String percent_2dp = String.format(java.util.Locale.US, "%.2f", percent);
-			System.out.println("Compression : " + percent_2dp + "%");
-
-			// display the rle encoding results in a dialog window
-			if (numBytesProcessed > 0) {
-				RLE_Results_Dialog rleresultsdialog = new RLE_Results_Dialog(filelength, outputfilelength, percent_2dp);
-			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		} finally {
@@ -124,6 +94,7 @@ public class RLE_Compress {
 
 	}
 
+	// main RLE processing for the current byte
 	public static void rle_process(String outputFilename, long filelength) {
 
 		if (!(readDec.matches(previousDec))) {
@@ -189,6 +160,49 @@ public class RLE_Compress {
 		// if readDec == previousDec, inc runLength & numBytesProcessed & read next byte
 		runLength++;
 		numBytesProcessed++;
+	}
+
+	// write the last read byte and the EOF id bytes to the output file
+	public static void writeEOFByte(long filelength, String outputFilename) {
+
+		// invalidate the current string so that it will now write the last byte or run
+		// of bytes read from the file
+		readInt++;
+		// left pad the read decimal value
+		readDec = String.format("%02d", readInt);
+		rle_process(outputFilename, filelength);
+
+		// write an end of file id byte FFFE, which decompression routine can
+		// check for end of compressed data
+
+		int[] outputArray2 = new int[2];
+		outputArray2[0] = Integer.parseInt("ff", 16);
+		outputArray2[1] = Integer.parseInt("fe", 16);
+		writeToOutputFileArray(outputArray2, outputFilename);
+
+		System.out.println("##EOF##\n");
+	}
+
+	// display information about the RLE Encoding in a new dialog window
+	public static void showEncodingResultinNewDialog(long filelength, String outputFilename) {
+
+		// calculate rle encoding result %
+		long outputfilelength = 0;
+		File file = new File(outputFilename);
+		if (file.exists()) {
+			outputfilelength = file.length();
+		}
+		System.out.println("Original String Length " + filelength);
+		System.out.println("RLE Encoded Size " + outputfilelength);
+
+		float percent = (float) 100.0 - (outputfilelength * (float) 100.0) / filelength;
+		String percent_2dp = String.format(java.util.Locale.US, "%.2f", percent);
+		System.out.println("Compression : " + percent_2dp + "%");
+
+		// display the rle encoding results in a dialog window
+		if (numBytesProcessed > 0) {
+			RLE_Results_Dialog rleresultsdialog = new RLE_Results_Dialog(filelength, outputfilelength, percent_2dp);
+		}
 	}
 
 	// write the passed in byte to the output file
